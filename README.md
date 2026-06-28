@@ -96,7 +96,7 @@ Which is exactly the 1-D heat equation.
 
 ### Analytical solution 
 
-We know consider the 1D heat equation:   
+We now consider the 1D heat equation:   
 
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2 }
@@ -117,7 +117,7 @@ $$
 T(x,t) = X(x)H(t)
 $$
 
-Pluging this into the heat equation yields:
+Plugging this into the heat equation yields:
 
 $$
 X(x)H'(t) = \alpha X''(x)H(t)
