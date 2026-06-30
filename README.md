@@ -342,3 +342,236 @@ The general solution to the heat equation under our boundary conditions is there
 $$
 T(x,t) = \sum_{n=1}^{\infty} \left ( \frac{2}{L}  \int_{0}^{L}  \sin(\frac{\pi nz}{L}) f(z) dz \right)\ \sin(\frac{\pi nx}{L}) e^{-(\frac{\pi n}{L})^2 \alpha t } 
 $$
+
+Now that we have the analytical solution, it will serve as a benchmark for validating our numerical solutions.
+
+## Numerical solution
+
+As stated previously, the one-dimensional heat equation is:
+
+$$
+\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2 }
+$$
+
+Our initial and boundary conditions are:
+
+$$
+\begin{cases}
+T(0,t) = T(L,t) = 0 \\
+T(x,0) = f(x)
+\end{cases}
+$$
+
+The solution $T : [0,L] \times \mathbf{R^+} \to \mathbf{R}$ is a continuous function on $[0,L] \times \mathbf{R^+}$ .
+
+Since it is impossible to calculate the solution at infinitely many points, we first discretize both time and space as such:
+
+$$
+\begin{cases}
+x_j = j \Delta x \text{ with } j \in \{0, \ldots, N\} \\
+\Delta x = \frac{L}{N} \\
+\end{cases}
+\text{ Where N is the number of spatial intervals}
+$$
+
+Similarly, the time grid is defined as such:
+
+$$
+\begin{cases}
+t^n = n \Delta t \text{ with } n \in \mathbf{N}\\
+\Delta t \text{ is the time step}
+\end{cases}
+$$
+
+The numerical approximation will be denoted as $T_{j}^{n} =T(x_j,t^n)$
+
+### Finite differences
+
+The first-order Taylor expansion of a sufficiently smooth function _f_ is:
+
+$$
+f(x+h) = f(x) + hf'(x) + O(h^2) 
+$$
+
+i.e.,
+
+$$
+f'(x) = \frac{f(x + h) - f(x)}{h} + O(h) 
+$$
+
+Finite differences use the simple idea that neglecting the $O(h)$ term gives us an approximation of $f'(x)$:
+
+$$
+f'(x) \approx \frac{f(x + h) - f(x)}{h} 
+$$
+
+This approximation is called the forward difference approximation since it uses "$f(x+h) - f(x)$", it is first-order accurate due to the truncation of the $O(h)$ term.   
+
+Similarly, we can obtain an approximation for the second derivative of f using its fourth-order Taylor expansion:
+
+$$
+\begin{cases}
+f(x+h) = f(x) + hf'(x) + \frac{h^2}{2} f''(x) + \frac{h^3}{6} f'''(x) + O(h^4) \\
+f(x-h) = f(x) - hf'(x) + \frac{h^2}{2} f''(x) - \frac{h^3}{6} f'''(x) + O(h^4)
+\end{cases}
+$$
+
+
+Adding these two equations yields:
+
+$$
+f(x+h) + f(x-h) =  2 f(x) + h^2 f''(x) + O(h^4)
+$$
+
+Solving for $f''(x)$:
+
+$$
+f''(x) = \frac{f(x+h) - 2 f(x) + f(x-h)}{h^2} + O(h^2)
+$$
+
+Discarding the $O(h^2)$ term yields:
+
+$$
+f''(x) \approx \frac{f(x+h) - 2 f(x) + f(x-h)}{h^2}
+$$
+
+This is the central difference approximation; it is second-order accurate due to the truncation of the $O(h^2)$ term.
+
+### Numerical application
+
+Using the forward approximation on the time derivative yields:
+
+$$
+\frac{\partial T}{\partial t} \approx \frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t}
+$$
+
+Likewise, using the central difference approximation to compute the second-order space derivative yields:
+
+$$
+\frac{\partial^2 T}{\partial x^2 } \approx \frac{T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n}}{(\Delta x )^2}
+$$
+
+Plugging this into the heat equation:
+
+$$
+\frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t} = \alpha \frac{T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n}}{(\Delta x )^2}
+$$
+
+Solving for $T_{j}^{n+1}$:
+
+$$
+T_{j}^{n+1} = \frac{\alpha \Delta t}{(\Delta x )^2}(T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n}) + T_{j}^{n}
+$$
+
+Let $r = \frac{\alpha \Delta t}{(\Delta x )^2}$:
+
+$$
+T_{j}^{n+1} = r(T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n}) + T_{j}^{n}
+$$
+
+Rearranging yields:
+
+$$
+T_{j}^{n+1} = (1 - 2r) T_{j}^{n} + r(T_{j+1}^{n} + T_{j-1}^{n}) 
+$$
+
+Which is the FTCS approximation (Forward time, central space).
+
+It is interesting to note that this solution is only conditionally stable: Under certain conditions, the error could grow exponentially.
+
+to properly account for this, we model the error as a Fourier mode:
+
+$$
+\epsilon_j^n = \xi^n e^{ik j\Delta x}
+$$
+
+
+Where $\xi$ is the amplification factor and $k$ is the wave number. Stability requires that the error does not grow over time, i.e.:
+
+$$
+|\xi| \leq 1
+$$
+
+This works because since the error vanishes at the boundaries (just like T does), it satisfies the same conditions that made the sine series a valid basis for the solution in the analytical resolution, the error can therefore be decomposed into that same Fourier basis.
+
+Plugging the error into the FTCS scheme:
+
+$$
+\epsilon_{j}^{n+1} = (1 - 2r) \epsilon_{j}^{n} + r(\epsilon_{j+1}^{n} + \epsilon_{j-1}^{n}) 
+$$
+
+i.e.,
+
+$$
+\xi^{n+1} e^{ik j\Delta x} = (1 - 2r) \xi^n e^{ik j\Delta x} + r(\xi^n e^{ik (j+1)\Delta x} + \xi^n e^{ik (j-1)\Delta x}) 
+$$
+
+Dividing both sides by $\xi^{n} e^{ik j\Delta x}$ yields:
+
+$$
+\xi = 1 - 2r +r(e^{ik \Delta x} + e^{-ik \Delta x})
+$$
+
+i.e.,
+
+$$
+\xi = 1 - 2r + 2r \cos(k \Delta x)
+$$
+
+$\Rightarrow$
+
+$$
+\xi = 1 - 2r(1 - \cos(k \Delta x))
+$$
+
+Knowing that $1 - \cos(\theta) = 2 \sin^2 (\frac{\theta}{2})$:
+
+$$
+\xi = 1 - 4r\sin^2(\frac{k \Delta x}{2})
+$$
+
+We need $|\xi| \leq 1$ i.e.,
+
+$$
+-1 \leq 1 - 4r\sin^2(\frac{k \Delta x}{2}) \leq 1
+$$
+
+The right side is always verified since $r > 0$, the left one is:
+
+$$
+-1 \leq 1 - 4r\sin^2(\frac{k \Delta x}{2})
+$$
+
+i.e.,
+
+$$
+4r\sin^2(\frac{k \Delta x}{2}) \leq 2
+$$
+
+The inequality must be true for all possible $k$, the worst case is $\sin^2(\frac{k \Delta x}{2}) = 1$:
+
+$$
+4r \leq 2
+$$
+
+i.e,
+
+$$
+r \leq \frac{1}{2}
+$$
+
+Which finally gives us the stability condition:
+
+$$
+\frac{\alpha \Delta t}{(\Delta x )^2} \leq \frac{1}{2}
+$$
+
+i.e.,
+
+$$
+\Delta t \leq \frac{(\Delta x )^2}{2 \alpha}
+$$
+
+Violating this condition leads to the error growing exponentially, and making the simulation useless.
+
+Since this is true for all Fourier modes, it must be true of any error which can be represented by a Fourier series, which in our case is all of them.
