@@ -8,7 +8,7 @@ This project explores mathematical modelling and numerical simulation through th
 - Fourier coefficient derivation for arbitrary initial temperature profiles
 - Finite difference discretization grid implementation
 - Forward-Time Central-Space (FTCS) numerical solver
-- Stability analysis and mathematical proof of the $r \leq 1/2$ stability criteria 
+- Von Neumann Stability analysis and mathematical proof of the $r \leq 1/2$ stability criteria 
 
 ## Table of Contents
 - [1. 1D Heat equation](#1d-heat-equation)
