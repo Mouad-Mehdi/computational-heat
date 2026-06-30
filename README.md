@@ -1,7 +1,23 @@
 # computational-heat
-Numerical resolution of the 1D and 2D heat equation using finite difference methods.
 
-To properly model the heat equation, we must first understand where it comes from.    
+This project explores mathematical modelling and numerical simulation through the study of the heat equation, starting from the idealized 1D rod with Dirichlet boundary conditions and working through the constraints of physical parameters. The analytical solution is derived via separation of variables and Fourier series expansion, while numerical approximations are computed using the Forward-Time Central-Space (FTCS) finite differences method.
+
+## Features
+- First-principles derivation of the 1D heat equation from Fourier's law and energy conservation
+- Exact analytical solution using separation of variables
+- Fourier coefficient derivation for arbitrary initial temperature profiles
+- Finite difference discretization grid implementation
+- Forward-Time Central-Space (FTCS) numerical solver
+- Stability analysis and mathematical proof of the $r \leq 1/2$ stability criteria 
+
+## Table of Contents
+- [1. 1D Heat equation](#1d-heat-equation)
+  - [1.1 Deriving the equation from first principle](#deriving-the-equation-from-first-principle)
+  - [1.2 Analytical solution](#analytical-solution)
+- [2. Numerical solution](#numerical-solution)
+  - [2.1 Finite differences](#finite-differences)
+  - [2.2 Numerical application](#numerical-application)
+- [3. Future work](#3-future-work)
 
 ## 1D Heat equation 
 
@@ -575,3 +591,12 @@ $$
 Violating this condition leads to the error growing exponentially, and making the simulation useless.
 
 Since this is true for all Fourier modes, it must be true of any error which can be represented by a Fourier series, which in our case is all of them.
+
+## 3. Future Work
+
+- Implementation of the analytical solution and comparison with the FTCS method.
+- Implementing a Gaussian as the initial heat grid.
+- Solving the 2D heat equation
+
+
+
