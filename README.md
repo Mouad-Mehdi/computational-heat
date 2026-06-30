@@ -127,7 +127,7 @@ T(x,0) = f(x)
 \end{cases}
 $$
 
-We first assume that the solution can be written as two seperate functions:
+We first assume that the solution can be written as two separate functions:
 
 $$
 T(x,t) = X(x)H(t)
