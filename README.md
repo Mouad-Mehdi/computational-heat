@@ -147,7 +147,7 @@ $$
 \frac{H'(t)}{H(t)} = \alpha \frac{X''(x)}{X(x)}
 $$
 
-for these two functions of x and t to be equal for all (x,t), they must both be equal to the same constant $-\lambda$
+For these two functions of x and t to be equal for all (x,t), they must both be equal to the same constant $-\lambda$
 
 i.e.,
 
@@ -497,7 +497,7 @@ Which is the FTCS approximation (Forward time, central space).
 
 It is interesting to note that this solution is only conditionally stable: Under certain conditions, the error could grow exponentially.
 
-to properly account for this, we model the error as a Fourier mode:
+To properly account for this, we model the error as a Fourier mode:
 
 $$
 \epsilon_j^n = \xi^n e^{ik j\Delta x}
@@ -676,7 +676,7 @@ This implementation, as well as the comparison between the analytical and numeri
 
 ### Results
 
-This graph show a comparison between two heatmaps generated with both the Analytical and numerical solutions of the heat equation. As well as a heatmap of the error.
+This graph shows a comparison between two heatmaps generated with both the Analytical and numerical solutions of the heat equation. As well as a heatmap of the error.
 
 ![Ideal Model](images/ftcs_comp.png)
 
