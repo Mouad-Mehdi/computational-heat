@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 # An implementation of the FTCS approximation:
 def heat_ftcs(I, N, r, T_initial):
     # Checking the stability conditions
-    #if r > 0.5 :
-     #   raise ValueError("Stability condition violated! r must be <= 0.5. Current r = {r:.4f}")
+    if r > 0.5 :
+       raise ValueError(f"Stability condition violated! r must be <= 0.5. Current r = {r:.4f}")
        
     # Initializing the space time grid matrix:
     T = np.zeros((I+1,N+1))
