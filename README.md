@@ -682,7 +682,6 @@ This graph shows a comparison between two heatmaps generated with both the Analy
 
 ## 3. Future Work
 
-- Implementation of the analytical solution and comparison with the FTCS method.
 - Implementing a Gaussian as the initial heat grid.
 - Solving the 2D heat equation
 
