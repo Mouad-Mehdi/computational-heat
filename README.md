@@ -12,11 +12,12 @@ This project explores mathematical modelling and numerical simulation through th
 
 ## Table of Contents
 - [1. 1D Heat equation](#1d-heat-equation)
-  - [1.1 Deriving the equation from first principle](#deriving-the-equation-from-first-principle)
+  - [1.1 Deriving the equation from first principles](#deriving-the-equation-from-first-principles)
   - [1.2 Analytical solution](#analytical-solution)
 - [2. Numerical solution](#numerical-solution)
   - [2.1 Finite differences](#finite-differences)
-  - [2.2 Numerical application](#numerical-application)
+  - [2.2 Forward-Time Central-space](#forward-time-central-space)
+  - [2.3 Implementation](#implementation)
 - [3. Future work](#3-future-work)
 
 ## 1D Heat equation 
@@ -26,7 +27,7 @@ We consider a homogeneous 1D rod of size $[0, L]$, with no internal heat generat
 We further assume that the temperature at the extremities of the rod is null: $T(0,t) = T(L,t) = 0$      
 And that the temperature field at t = 0 can be expressed as $T(x,0) = f(x)$     
 
-### Deriving the equation from first principle 
+### Deriving the equation from first principles 
 
 Fourier's law tells us:   
 
@@ -453,7 +454,7 @@ $$
 
 This is the central difference approximation; it is second-order accurate due to the truncation of the $O(h^2)$ term.
 
-### Numerical application
+### Forward-Time Central-Space
 
 Using the forward approximation on the time derivative yields:
 
@@ -591,6 +592,84 @@ $$
 Violating this condition leads to the error growing exponentially, and making the simulation useless.
 
 Since this is true for all Fourier modes, it must be true of any error which can be represented by a Fourier series, which in our case is all of them.
+
+### Implementation
+
+To correctly apply the FTCS approximation, we must first model our system as a space time matrix:
+
+$$
+\begin{pmatrix}
+T_{0}^{0} & T_{0}^{1} & .. & .. & T_{0}^{N} \\
+T_{1}^{0} & .. &.. & .. & T_{1}^{N} \\
+.. & .. & .. & .. & .. \\
+.. & .. & .. & .. & .. \\
+T_{I}^{0} & T_{I}^{1} & .. & .. & T_{I}^{N}
+\end{pmatrix}
+$$
+
+Which with our boundary conditions translates to:
+
+$$
+\begin{pmatrix}
+0 & 0 & .. & .. & 0 \\
+T_{1}^{0} & .. &.. & .. & T_{1}^{N} \\
+.. & .. & .. & .. & .. \\
+.. & .. & .. & .. & .. \\
+0 & 0 & .. & .. & 0
+\end{pmatrix}
+$$
+
+The current state is represented by a state vector:
+
+$$
+T^n = 
+\begin{pmatrix}
+T_{0}^{n} \\
+T_{1}^{n} \\
+.. \\
+.. \\
+T_{I}^{n} 
+\end{pmatrix}
+$$
+
+The update loop for internal points (Since the edges are always at 0 there's no need to compute them) can therefore be written as:
+
+$$
+T_{int}^n = 
+\begin{pmatrix}
+T_{1}^{n} \\
+T_{2}^{n} \\
+.. \\
+.. \\
+T_{I-1}^{n} 
+\end{pmatrix}
+$$
+
+$$
+T_{int}^{n+1} =  (1 - 2r) T_{int}^{n} + r(T_{left}^{n} + T_{right}^{n})
+$$
+
+With:
+
+$$
+T_{left}^n = 
+\begin{pmatrix}
+T_{0}^{n} \\
+T_{1}^{n} \\
+.. \\
+.. \\
+T_{I-2}^{n} 
+\end{pmatrix}
+\text{ and }
+T_{right}^n = 
+\begin{pmatrix}
+T_{2}^{n} \\
+T_{3}^{n} \\
+.. \\
+.. \\
+T_{I}^{n} 
+\end{pmatrix}
+$$
 
 ## 3. Future Work
 
