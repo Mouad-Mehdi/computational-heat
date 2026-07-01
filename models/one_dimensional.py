@@ -14,7 +14,7 @@ dx = L/I  # Spatial step
 
 # Temporal domain setup :
 N = 40000                 # Number of temporal points
-target_r = 0.500001           # Target r
+target_r = 0.4          # Target r
 dt = target_r*dx**2/alpha # Time step
 H = dt * N                # Simulation time in s   
 
