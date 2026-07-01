@@ -671,6 +671,8 @@ T_{I}^{n}
 \end{pmatrix}
 $$
 
+This implementation, as well as the comparison between the analytical and numerical solutions can be found in "models/one_dimensional.py"
+
 ## 3. Future Work
 
 - Implementation of the analytical solution and comparison with the FTCS method.
