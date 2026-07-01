@@ -18,6 +18,7 @@ This project explores mathematical modelling and numerical simulation through th
   - [2.1 Finite differences](#finite-differences)
   - [2.2 Forward-Time Central-space](#forward-time-central-space)
   - [2.3 Implementation](#implementation)
+  - [2.4 Results](#results)
 - [3. Future work](#3-future-work)
 
 ## 1D Heat equation 
@@ -672,6 +673,12 @@ T_{I}^{n}
 $$
 
 This implementation, as well as the comparison between the analytical and numerical solutions can be found in "models/one_dimensional.py"
+
+### Results
+
+This graph show a comparison between two heatmaps generated with both the Analytical and numerical solutions of the heat equation. As well as a heatmap of the error.
+
+![Ideal Model](images/ftcs_comp.png)
 
 ## 3. Future Work
 
