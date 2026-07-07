@@ -676,14 +676,42 @@ This implementation, as well as the comparison between the analytical and numeri
 
 ### Results
 
-This graph shows a comparison between two heatmaps generated with both the Analytical and numerical solutions of the heat equation. As well as a heatmap of the error.
+As a first step, we will implement the following sinusoidal initial condition:
+
+$$
+f(x) = 1000 \sin(\frac{\pi x}{L}) 
+$$
+
+Which satisfies the boundary conditions.
+
+The corresponding analytical solution is therefore:
+
+$$
+T(x,t) = 1000 \sin(\frac{\pi x}{L}) e^{-(\frac{\pi}{L})^2 \alpha t }
+$$
+
+This figure compares the numerical FTCS solution with the analytical solution of the one-dimensional heat equation in the sinusoidal initial condition case. The third heatmap shows the absolute error between the two solutions.
 
 ![Ideal Model](images/ftcs_comp.png)
 
+The error is approximately 0.0035 °C at its highest, for a maximum temperature of 1000 °C ;which represents a relative error of 0.00035% ;indicating that the numerical and analytical solutions match closely.
+
+As a second step, we will model the case of a Gaussian initial temperature distribution, i.e.,
+
+$$
+f(x) = 1000 \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2 \sigma^2 } }
+$$
+
+With $\sigma$ being the standard deviation and $\mu$ being the mean.
+
+This second figure represents a heat map of the numerical FTCS solution in the case of Gaussian initial conditions with $\mu = 0.5$ and $\sigma = 0.05$.
+
+![Gaussian](images/gaussian.png)
+
+The following figure portrays the spatial Convergence of  the FTCS approximation in the case of the sinusoidal temperature distribution with a constant dt in a log-log scale, we can see that the convergence matches the second order expected rate.
+
+![Spatial Convergence](images/spatial_convergence.png)
+
 ## 3. Future Work
 
-- Implementing a Gaussian as the initial heat grid.
 - Solving the 2D heat equation
-
-
-
