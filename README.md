@@ -715,3 +715,4 @@ The following figure portrays the spatial Convergence of  the FTCS approximation
 ## 3. Future Work
 
 - Solving the 2D heat equation
+- Implementing Crank-Nicolson
