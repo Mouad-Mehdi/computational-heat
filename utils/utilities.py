@@ -2,38 +2,83 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # An implementation of the FTCS approximation:
-def heat_ftcs(I, N, r, T_initial):
-    # Checking the stability conditions
+def heat_ftcs(J, N, r, T_initial):
+    # Checking the stability conditions:
     if r > 0.5 :
-       raise ValueError(f"Stability condition violated! r must be <= 0.5. Current r = {r:.4f}")
+        raise ValueError(f"Stability condition violated! r must be <= 0.5. Current r = {r:.4f}")
        
     # Initializing the space time grid matrix:
-    T = np.zeros((I+1,N+1))
+    T = np.zeros((J+1,N+1))
 
-    # Appplying the initial conditions:
+    # Applying the initial conditions:
     T[:,0] = T_initial
 
     # Forcing the boundary conditions:
     T[0,:] = 0
-    T[I,:] = 0
+    T[J,:] = 0
 
     # FTCS loop:
     for n in range(0,N):
-        T[1:I, n+1] = (1 - 2*r) * T[1:I, n] + r * (T[2:I+1, n] + T[0:I-1, n])
+        T[1:J, n+1] = (1 - 2*r) * T[1:J, n] + r * (T[2:J+1, n] + T[0:J-1, n])
 
     return T
 
-# Ploting a heatmap:
-def heatmap(data,L,H):
+# An implementation of Thomas' algorithm:
+def thomas(A,d):
+    # Setting up the parameters:
+	upper = np.diagonal(A, offset = 1).copy()
+	main = np.diagonal(A).copy()
+	lower = np.diagonal(A, offset = -1).copy()
+	d = d.copy()
+	n = len(main)
+	x = np.zeros(n)
+	
+    # Forward elimination:
+	for i in range(1,n):
+		pivot = lower[i-1] / main[i-1]
+		main[i] = main[i] - pivot * upper[i-1]
+		d[i] = d[i] - pivot * d[i-1]
+	
+    # Back substitution
+	x[n-1] = d[n-1] / main[n-1]
+	for i in range(n-2,-1,-1):
+		x[i] = (d[i] - upper[i] * x[i+1]) / main[i]
+		
+	return x
+
+# An implementation of the BTCS approximation:
+def heat_btcs(J, N, r, T_initial):
+
+    # Initializing the linear system matrix:
+    A = np.diag(np.full(J-1, 1 + 2*r)) + np.diag(np.full(J-2, -r), k=1) + np.diag(np.full(J-2, -r), k=-1)
+
+    # Initializing the space-time matrix:
+    T = np.zeros((J+1,N+1))
+
+    # Applying the initial conditions:
+    T[:,0] = T_initial
+
+    # Forcing the boundary conditions:
+    T[0,:] = 0
+    T[J,:] = 0
+
+    # BTCS loop:
+    for n in range(1,N+1):
+        T[1:J,n] = thomas(A,T[1:J,n-1])
+
+    return T
+
+# Plotting a heatmap:
+def heatmap(data, L, H, title):
     plt.figure()
     heat = plt.imshow(data, cmap='inferno', aspect="auto", origin='lower',extent=[0,H,0,L])
     cbar = plt.colorbar(heat)
     cbar.set_label("Temperature (T)", size=11)
     plt.xlabel("Time (s)", fontsize=11)
     plt.ylabel("Position along the Rod (x)", fontsize=11)
+    plt.title(title)
     plt.tight_layout()
     plt.show()
-
 
 # Comparing the analytical and numerical solutions via two heatmaps:
 def heatmap_comp(analytical, numerical, L, H, v_max):
