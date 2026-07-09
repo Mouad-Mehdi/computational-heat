@@ -7,28 +7,35 @@ This project explores mathematical modelling and numerical simulation through th
 - Exact analytical solution using separation of variables
 - Fourier coefficient derivation for arbitrary initial temperature profiles
 - Finite difference discretization grid implementation
-- Forward-Time Central-Space (FTCS) numerical solver
+- Forward-Time Central-Space (FTCS) derivation and implementation
 - Von Neumann Stability analysis and mathematical proof of the $r \leq 1/2$ stability criteria 
+- Backward-Time Central-Space (BTCS) derivation and implementation
 
 ## Table of Contents
 - [1. 1D Heat equation](#1d-heat-equation)
-  - [1.1 Deriving the equation from first principles](#deriving-the-equation-from-first-principles)
-  - [1.2 Analytical solution](#analytical-solution)
-- [2. Numerical solution](#numerical-solution)
-  - [2.1 Finite differences](#finite-differences)
-  - [2.2 Forward-Time Central-space](#forward-time-central-space)
-  - [2.3 Implementation](#implementation)
-  - [2.4 Results](#results)
-- [3. Future work](#3-future-work)
+  - [1.1 Deriving the equation from first principles](#11-deriving-the-equation-from-first-principles)
+  - [1.2 Analytical solution](#12-analytical-solution)
+- [2. Forward-Time Central-Space (FTCS)](#2-forward-time-central-space)
+  - [2.1 Finite differences](#21-finite-differences)
+  - [2.2 FTCS derivation](#22-ftcs-derivation)
+  - [2.3 Stability Analysis](#23-stability-analysis)
+  - [2.4 Implementation](#24-implementation)
+  - [2.5 Results](#25-results)
+- [3. Backward-Time Central-Space (BTCS)](#3-backward-time-central-space)
+  - [3.1 Derivation](#31-derivation)
+  - [3.2 Stability analysis](#32-stability-analysis)
+  - [3.3 Thomas' Algorithm](#33-thomas-algorithm)
+  - [3.4 Implementation](#34-implementation)
+- [4. Future work](#4-future-work)
 
-## 1D Heat equation 
+## 1. 1D Heat equation 
 
 We consider a homogeneous 1D rod of size $[0, L]$, with no internal heat generation and constant physical parameters.      
 
 We further assume that the temperature at the extremities of the rod is null: $T(0,t) = T(L,t) = 0$      
 And that the temperature field at t = 0 can be expressed as $T(x,0) = f(x)$     
 
-### Deriving the equation from first principles 
+### 1.1 Deriving the equation from first principles 
 
 Fourier's law tells us:   
 
@@ -112,7 +119,7 @@ $$
 
 Which is exactly the 1-D heat equation.   
 
-### Analytical solution 
+### 1.2 Analytical solution 
 
 We now consider the 1D heat equation:   
 
@@ -182,7 +189,7 @@ If $\lambda = 0$ , the solution is:
 $$
 \begin{cases}
 X(x) = Ax + B \\
-(A,B) \in \mathbf{R} 
+(A,B) \in \mathbb{R} 
 \end{cases}
 $$
 
@@ -264,7 +271,7 @@ $\Rightarrow$
 $$
 \begin{cases}
 \sqrt{\lambda} L = \pi n \\
-n \in \mathbf{N}
+n \in \mathbb{N}
 \end{cases}
 $$
 
@@ -309,7 +316,7 @@ $$
 
 Which is a Fourier Series, we must derive its coefficient to get the general solution.  
 
-Let $(m,n) \in \mathbf{N^2}$ : 
+Let $(m,n) \in \mathbb{N^2}$ : 
 
 $$
 f(x) = \sum_{n=1}^{\infty} C_n \sin(\frac{\pi nx}{L})
@@ -330,7 +337,7 @@ $$
 $\Rightarrow$
 
 $$
-\int_{0}^{L} \sin(\frac{\pi mx}{L}) f(x) dx = \sum_{n=1}^{\infty} \int_{0}^{L} C_n\sin(\frac{\pi mx}{L}) \sin(\frac{\pi nx}{L}) dx
+\int_{0}^{L} \sin(\frac{\pi mx}{L}) f(x) dx = \sum_{n=1}^{\infty} C_n \int_{0}^{L} \sin(\frac{\pi mx}{L}) \sin(\frac{\pi nx}{L}) dx
 $$
 
 i.e.,
@@ -349,7 +356,7 @@ $$
 \end{cases}
 $$
 
-the Fourier coefficient of f can therefore be expressed as:   
+The Fourier coefficient of f can therefore be expressed as:   
 
 $$
 C_n = \frac{2}{L} \int_{0}^{L} \sin(\frac{\pi nx}{L}) f(x) dx 
@@ -363,7 +370,7 @@ $$
 
 Now that we have the analytical solution, it will serve as a benchmark for validating our numerical solutions.
 
-## Numerical solution
+## 2. Forward-Time Central-Space
 
 As stated previously, the one-dimensional heat equation is:
 
@@ -380,7 +387,7 @@ T(x,0) = f(x)
 \end{cases}
 $$
 
-The solution $T : [0,L] \times \mathbf{R^+} \to \mathbf{R}$ is a continuous function on $[0,L] \times \mathbf{R^+}$ .
+The solution $T : [0,L] \times \mathbb{R^+} \to \mathbb{R}$ is a continuous function on $[0,L] \times \mathbb{R^+}$ .
 
 Since it is impossible to calculate the solution at infinitely many points, we first discretize both time and space as such:
 
@@ -396,14 +403,14 @@ Similarly, the time grid is defined as such:
 
 $$
 \begin{cases}
-t^n = n \Delta t \text{ with } n \in \mathbf{N}\\
+t^n = n \Delta t \text{ with } n \in \mathbb{N}\\
 \Delta t \text{ is the time step}
 \end{cases}
 $$
 
 The numerical approximation will be denoted as $T_{j}^{n} =T(x_j,t^n)$
 
-### Finite differences
+### 2.1 Finite differences
 
 The first-order Taylor expansion of a sufficiently smooth function _f_ is:
 
@@ -455,7 +462,7 @@ $$
 
 This is the central difference approximation; it is second-order accurate due to the truncation of the $O(h^2)$ term.
 
-### Forward-Time Central-Space
+### 2.2 FTCS derivation
 
 Using the forward approximation on the time derivative yields:
 
@@ -494,6 +501,8 @@ T_{j}^{n+1} = (1 - 2r) T_{j}^{n} + r(T_{j+1}^{n} + T_{j-1}^{n})
 $$
 
 Which is the FTCS approximation (Forward time, central space).
+
+### 2.3 Stability Analysis
 
 It is interesting to note that this solution is only conditionally stable: Under certain conditions, the error could grow exponentially.
 
@@ -572,7 +581,7 @@ $$
 4r \leq 2
 $$
 
-i.e,
+i.e.,
 
 $$
 r \leq \frac{1}{2}
@@ -594,17 +603,17 @@ Violating this condition leads to the error growing exponentially, and making th
 
 Since this is true for all Fourier modes, it must be true of any error which can be represented by a Fourier series, which in our case is all of them.
 
-### Implementation
+### 2.4 Implementation
 
 To correctly apply the FTCS approximation, we must first model our system as a space time matrix:
 
 $$
 \begin{pmatrix}
-T_{0}^{0} & T_{0}^{1} & .. & .. & T_{0}^{N} \\
-T_{1}^{0} & .. &.. & .. & T_{1}^{N} \\
-.. & .. & .. & .. & .. \\
-.. & .. & .. & .. & .. \\
-T_{I}^{0} & T_{I}^{1} & .. & .. & T_{I}^{N}
+T_{0}^{0} & T_{0}^{1} & \cdots & \cdots & T_{0}^{N} \\
+T_{1}^{0} & \vdots & \vdots & \vdots & T_{1}^{N} \\
+\vdots & \vdots & \vdots & \vdots & \vdots \\
+\vdots & \vdots & \vdots & \vdots & \vdots \\
+T_{I}^{0} & T_{I}^{1} & \cdots & \cdots & T_{I}^{N}
 \end{pmatrix}
 $$
 
@@ -627,24 +636,26 @@ T^n =
 \begin{pmatrix}
 T_{0}^{n} \\
 T_{1}^{n} \\
-.. \\
-.. \\
+\vdots \\
+\vdots \\
 T_{I}^{n} 
 \end{pmatrix}
 $$
 
-The update loop for internal points (Since the edges are always at 0 there's no need to compute them) can therefore be written as:
+Since the boundary temperature is fixed, there is no need to update it. The internal state can therefore be written as:
 
 $$
 T_{int}^n = 
 \begin{pmatrix}
 T_{1}^{n} \\
 T_{2}^{n} \\
-.. \\
-.. \\
+\vdots \\
+\vdots \\
 T_{I-1}^{n} 
 \end{pmatrix}
 $$
+
+The update loop can also be written to only include internal points:
 
 $$
 T_{int}^{n+1} =  (1 - 2r) T_{int}^{n} + r(T_{left}^{n} + T_{right}^{n})
@@ -657,8 +668,8 @@ T_{left}^n =
 \begin{pmatrix}
 T_{0}^{n} \\
 T_{1}^{n} \\
-.. \\
-.. \\
+\vdots \\
+\vdots \\
 T_{I-2}^{n} 
 \end{pmatrix}
 \text{ and }
@@ -666,15 +677,38 @@ T_{right}^n =
 \begin{pmatrix}
 T_{2}^{n} \\
 T_{3}^{n} \\
-.. \\
-.. \\
+\vdots \\
+\vdots \\
 T_{I}^{n} 
 \end{pmatrix}
 $$
 
-This implementation, as well as the comparison between the analytical and numerical solutions can be found in "models/one_dimensional.py"
+Which is exactly the implementation I choose to write:
 
-### Results
+```python
+def heat_ftcs(I, N, r, T_initial):
+    # Checking the stability conditions:
+    if r > 0.5 :
+        raise ValueError(f"Stability condition violated! r must be <= 0.5. Current r = {r:.4f}")
+       
+    # Initializing the space time grid matrix:
+    T = np.zeros((I+1,N+1))
+
+    # Applying the initial conditions:
+    T[:,0] = T_initial
+
+    # Forcing the boundary conditions:
+    T[0,:] = 0
+    T[I,:] = 0
+
+    # FTCS loop:
+    for n in range(0,N):
+        T[1:I, n+1] = (1 - 2*r) * T[1:I, n] + r * (T[2:I+1, n] + T[0:I-1, n])
+
+    return T
+```
+
+### 2.5 Results
 
 As a first step, we will implement the following sinusoidal initial condition:
 
@@ -712,7 +746,249 @@ The following figure portrays the spatial Convergence of  the FTCS approximation
 
 ![Spatial Convergence](images/spatial_convergence.png)
 
-## 3. Future Work
 
-- Solving the 2D heat equation
+## 3. Backward-Time Central-Space 
+
+### 3.1 Derivation
+
+A major drawback of the FTCS method is that it is only conditionally stable, as shown previously, violating the stability condition $\Delta t \leq \frac{(\Delta x )^2}{2 \alpha}$ will cause the error to grow exponentially.
+
+This is why we will introduce the BTCS approximation next. This approximation is built in the same way as FTCS, but instead of evaluating the equation at time step n, we evaluate it at the time step n+1, with backward finite differences in time. i.e.,
+
+$$
+\frac{\partial T}{\partial t} |_{n+1} \approx \frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t}
+$$
+
+Likewise, the space derivative is also evaluated at the time step n+1:
+
+$$
+\frac{\partial^2 T}{\partial x^2 } |_{n+1} \approx \frac{T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1}}{(\Delta x )^2}
+$$
+
+Plugging this into the heat equation again yields:
+
+$$
+\frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t} = \alpha \frac{T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1}}{(\Delta x )^2}
+$$
+
+Defining $r = \frac{\alpha \Delta t}{(\Delta x )^2}$:
+
+$$
+T_{j}^{n+1} - T_{j}^{n} = r ( T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1} )
+$$
+
+Rearranging all the unknown terms on the left side:
+
+$$
+T_{j}^{n+1} - r ( T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1} ) = T_{j}^{n} 
+$$
+
+i.e.,
+
+$$
+-r T_{j+1}^{n+1} + (1+2r) T_{j}^{n+1} - r T_{j-1}^{n+1} = T_{j}^{n}
+$$
+
+Which is exactly the BTCS approximation.
+
+Defining the same internal state vector as before:
+
+$$
+T^n = 
+\begin{pmatrix}
+T_{1}^{n} \\
+T_{2}^{n} \\
+\vdots \\
+\vdots \\
+T_{I-1}^{n} 
+\end{pmatrix}
+$$
+
+This gives us a system of equations:
+
+$$
+\begin{cases}
+-r T_{2}^{n+1} + (1+2r) T_{1}^{n+1} - r T_{0}^{n+1} = T_{1}^{n} \\
+-r T_{3}^{n+1} + (1+2r) T_{2}^{n+1} - r T_{1}^{n+1} = T_{2}^{n} \\
+\vdots \\
+\vdots \\
+-r T_{I}^{n+1} + (1+2r) T_{I-1}^{n+1} - r T_{I-2}^{n+1} = T_{I-1}^{n}
+\end{cases}
+$$
+
+Which exactly translates to:
+
+$$
+AT^{n+1} = T^n + b
+$$
+
+With:
+
+$$
+A =
+\begin{pmatrix}
+(1+2r) & -r & 0 & 0 & \cdots & 0 \\
+-r & (1+2r) & -r & 0 & 0 & 0 \\
+0 & -r & (1+2r) & -r  & 0 & \vdots \\
+0 & 0 & -r & \ddots & \ddots & 0 \\
+\vdots & \vdots & 0 & \ddots & \ddots & -r \\
+0 & 0 & 0 & 0 & -r & (1+2r) \\
+\end{pmatrix}
+\text{ and }
+b =
+\begin{pmatrix}
+r T_{0}^{n+1} \\
+0 \\
+0  \\
+.. \\
+0 \\
+r T_{I}^{n+1}  \\
+\end{pmatrix}
+$$
+
+Since our boundary temperature is always 0, the system simplifies to:
+
+$$
+AT^{n+1} = T^n
+$$
+
+It is worth noting that unlike FTCS, BTCS is an implicit method: solving for the next time step requires us to solve a linear system, rather than directly computing the new temperatures from the previous time step.
+
+### 3.2 Stability analysis
+
+We will again be modeling the error as a Fourier mode:
+
+$$
+\epsilon_j^n = \xi^{n} e^{ik j\Delta x}
+$$
+
+Where $\xi$ is the amplification factor and $k$ is the wave number.
+
+Plugging this into our BTCS scheme:
+
+$$
+-r \epsilon_{j+1}^{n+1} + (1+2r) \epsilon_{j}^{n+1} - r \epsilon_{j-1}^{n+1} = \epsilon_{j}^{n}
+$$
+
+i.e.,
+
+$$
+-r \xi^{n+1} e^{ik (j+1)\Delta x} + (1+2r) \xi^{n+1} e^{ik j\Delta x} - r \xi^{n+1} e^{ik (j-1)\Delta x} = \xi^{n} e^{ik j\Delta x}
+$$
+
+Dividing both sides by $\xi^{n} e^{ikj \Delta x}$ yields:
+
+$$
+-r \xi e^{ik \Delta x} + (1+2r) \xi  - r \xi e^{-ik\Delta x} = 1
+$$
+
+i.e.,
+
+$$
+\xi ( -r e^{ik \Delta x} + (1+2r) - r e^{-ik\Delta x} )= 1
+$$
+
+$\Rightarrow$
+
+$$
+\xi ( (1+2r) -2r \cos (k\Delta x) )= 1
+$$
+
+$\Rightarrow$
+
+$$
+\xi = \frac{1}{(1+2r) -2r \cos (k\Delta x)}
+$$
+
+$\Rightarrow$
+
+$$
+\xi = \frac{1}{1+2r(1- \cos (k\Delta x))} \geq 0
+$$
+
+Since $-1 \leq \cos (k\Delta x) \leq 1$ we have that:
+
+$$
+0 \leq 1 - \cos (k\Delta x) \leq 2
+$$
+
+And since $r \in \mathbb{R^+}$:
+
+$$
+2r (1- \cos (k\Delta x)) \geq 0
+$$
+
+i.e.,
+
+$$
+1+ 2r (1- \cos (k\Delta x)) \geq 1
+$$
+
+Which finally yields:
+
+$$
+| \xi | \leq 1
+$$
+
+For all positive _r_ ; the BTCS approximation is thus unconditionally stable, meaning that no restriction on the timestep is required for the simulation to remain stable.
+
+### 3.3 Thomas' Algorithm
+
+The BTCS approximation requires solving the linear system:
+
+$$
+AT^{n+1} = T^n
+$$
+
+Where A is a tridiagonal matrix: a matrix with zeros everywhere except on its main diagonal and the two adjancent ones.
+
+Instead of using a general purpose linear solver, we will take advantage of the fact that A is tridiagonal and use a specific algorithm made for this exact kind of matrices.
+
+Thomas' algorithm is an adaptation of Gaussian elimination designed specifically for tridiagonal systems, it works by only storing and operating on the three non-zero diagonals:
+
+$$
+A =
+\begin{pmatrix}
+b_1 & c_1 & 0 & 0 & \cdots & 0 \\
+a_2 & b_2 & c_2 & 0 & \cdots & 0 \\
+0 & a_3 & b_3 & c_3 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \ddots & \ddots & \vdots \\
+0 & 0 & \cdots & a_{n-1} & b_{n-1} & c_{n-1} \\
+0 & 0 & \cdots & 0 & a_n & b_n
+\end{pmatrix}
+$$
+
+where _b_ is the main diagonal, and _a_ and _c_ the adjacent ones.
+
+### 3.4 Implementation
+
+```Python
+# An implementation of the BTCS approximation:
+def heat_btcs(J, N, r, T_initial):
+
+    # Initializing the linear system matrix:
+    A = np.diag(np.full(J-1, 1 + 2*r)) + np.diag(np.full(J-2, -r), k=1) + np.diag(np.full(J-2, -r), k=-1)
+
+    # Initializing the space-time matrix:
+    T = np.zeros((J+1,N+1))
+
+    # Applying the initial conditions:
+    T[:,0] = T_initial
+
+    # Forcing the boundary conditions:
+    T[0,:] = 0
+    T[J,:] = 0
+
+    # BTCS loop:
+    for n in range(1,N+1):
+        T[1:J,n] = thomas(A,T[1:J,n-1])
+
+    return T
+```
+
+
+## 4. Future Work
+
 - Implementing Crank-Nicolson
+- Solving the 2D heat equation
+
