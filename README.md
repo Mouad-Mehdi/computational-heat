@@ -12,7 +12,7 @@ This project explores mathematical modelling and numerical simulation through th
 - Backward-Time Central-Space (BTCS) derivation and implementation
 
 ## Table of Contents
-- [1. 1D Heat equation](#1d-heat-equation)
+- [1. 1D Heat equation](#1-1d-heat-equation)
   - [1.1 Deriving the equation from first principles](#11-deriving-the-equation-from-first-principles)
   - [1.2 Analytical solution](#12-analytical-solution)
 - [2. Forward-Time Central-Space (FTCS)](#2-forward-time-central-space)
