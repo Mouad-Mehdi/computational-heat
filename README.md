@@ -940,7 +940,7 @@ $$
 AT^{n+1} = T^n
 $$
 
-Where A is a tridiagonal matrix: a matrix with zeros everywhere except on its main diagonal and the two adjancent ones.
+Where A is a tridiagonal matrix: a matrix with zeros everywhere except on its main diagonal and the two adjacent ones.
 
 Instead of using a general purpose linear solver, we will take advantage of the fact that A is tridiagonal and use a specific algorithm made for this exact kind of matrices.
 
@@ -949,16 +949,127 @@ Thomas' algorithm is an adaptation of Gaussian elimination designed specifically
 $$
 A =
 \begin{pmatrix}
-b_1 & c_1 & 0 & 0 & \cdots & 0 \\
-a_2 & b_2 & c_2 & 0 & \cdots & 0 \\
-0 & a_3 & b_3 & c_3 & \cdots & 0 \\
+b_0 & c_0 & 0 & 0 & \cdots & 0 \\
+a_0 & b_1 & c_1 & 0 & \cdots & 0 \\
+0 & a_1 & b_2 & c_2 & \cdots & 0 \\
 \vdots & \vdots & \ddots & \ddots & \ddots & \vdots \\
-0 & 0 & \cdots & a_{n-1} & b_{n-1} & c_{n-1} \\
-0 & 0 & \cdots & 0 & a_n & b_n
+0 & 0 & \cdots & a_{n-3} & b_{n-2} & c_{n-2} \\
+0 & 0 & \cdots & 0 & a_{n-2} & b_{n-1}
 \end{pmatrix}
 $$
 
 where _b_ is the main diagonal, and _a_ and _c_ the adjacent ones.
+
+Standard Gaussian elimination would have us compute a pivot:
+
+$$
+p_0 = \frac{a_0}{b_0}
+$$
+
+And then substract p times the first row to the second one.
+
+But since our matrix is tridiagonal, we can notice a few things:
+
+Firstly, the upper diagonal doesn't actually change at all. For every step, applying $R_i = R_i - p R_{i-1}$ leaves the upper diagonal untouched, since the element of the previous row in the column corresponding to $c_i$ is zero:
+
+$$
+c_i = c_i - 0 p
+$$
+
+We never have to modify it.
+
+Secondly, each element of the lower diagonal will be used exactly once to compute the pivot:
+
+$$
+p_i = \frac{a_i}{b_i}
+$$
+
+After which that entry would be set to zero, since it will never be used again, there is no need to explicitly modify it.
+
+Since all remaining off diagonal entries are permanently zero, they never participate in the elimination and therefore need not be stored nor updated.
+
+Applying standard Gaussian elimination while keeping these properties in mind means only modifying the values of the main diagonal and of the right-hand side individually, since every other value is either constant or equal to zero.
+
+The forward elimination therefore consists only of updating the main diagonal and the right-hand side.
+
+Conceptually, this will leave us with an upper triangular matrix of the form, although we will not be storing all of it:
+
+$$
+A =
+\begin{pmatrix}
+b_0 & c_0 & 0 & 0 & \cdots & 0 \\
+0 & b_1 & c_1 & 0 & \cdots & 0 \\
+0 & 0 & b_2 & c_2 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \ddots & \ddots & \vdots \\
+0 & 0 & \cdots & \ddots & b_{n-2} & c_{n-2} \\
+0 & 0 & \cdots & 0 & 0 & b_{n-1}
+\end{pmatrix}
+$$
+
+And its corresponding linear system, for simplicity, I have represented the unknown vector by _x_ and the right-hand side of the equation by _d_:  
+
+$$
+\begin{pmatrix}
+b_0 & c_0 & 0 & 0 & \cdots & 0 \\
+0 & b_1 & c_1 & 0 & \cdots & 0 \\
+0 & 0 & b_2 & c_2 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \ddots & \ddots & \vdots \\
+0 & 0 & \cdots & \ddots & b_{n-2} & c_{n-2} \\
+0 & 0 & \cdots & 0 & 0 & b_{n-1}
+\end{pmatrix}
+\begin{pmatrix}
+x_0 \\
+x_1 \\
+\vdots \\
+\vdots \\
+x_{n-1}
+\end{pmatrix} =
+\begin{pmatrix}
+d_0 \\
+d_1 \\
+\vdots \\
+\vdots \\
+d_{n-1}
+\end{pmatrix}
+$$
+
+From which we can simply solve for x:
+
+$$
+x_{n-1} = \frac{d_{n-1}}{b_{n-1}}
+$$
+
+And then:
+
+$$
+x_j = \frac{d_j - c_{j} x_{j+1}}{b_{j}}
+$$
+
+The following python implementation mirrors this process closely by only storing the necessary information and not performing redundant calculations:
+
+```Python
+def thomas(A, d):
+    # Setting up the parameters:
+	upper = np.diagonal(A, offset = 1).copy()
+	main = np.diagonal(A).copy()
+	lower = np.diagonal(A, offset = -1).copy()
+	d = d.copy()
+	n = len(main)
+	x = np.zeros(n)
+	
+    # Forward elimination:
+	for i in range(1, n):
+		pivot = lower[i-1] / main[i-1]
+		main[i] = main[i] - pivot * upper[i-1]
+		d[i] = d[i] - pivot * d[i-1]
+	
+    # Back substitution
+	x[n-1] = d[n-1] / main[n-1]
+	for i in range(n-2,-1,-1):
+		x[i] = (d[i] - upper[i] * x[i+1]) / main[i]
+		
+	return x
+```
 
 ### 3.4 Implementation
 
