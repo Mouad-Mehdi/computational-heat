@@ -46,12 +46,36 @@ def thomas(A,d):
 		
 	return x
 
+# An implementation of Thomas' algorithm that only takes the relevant informations:
+def thomas_separate(upper,main,lower,d):
+    # Setting up the parameters:
+	upper = upper.copy()
+	main = main.copy()
+	lower = lower.copy()
+	d = d.copy()
+	n = len(main)
+	x = np.zeros(n)
+	
+    # Forward elimination:
+	for i in range(1,n):
+		pivot = lower[i-1] / main[i-1]
+		main[i] = main[i] - pivot * upper[i-1]
+		d[i] = d[i] - pivot * d[i-1]
+	
+    # Back substitution
+	x[n-1] = d[n-1] / main[n-1]
+	for i in range(n-2,-1,-1):
+		x[i] = (d[i] - upper[i] * x[i+1]) / main[i]
+		
+	return x
+
 # An implementation of the BTCS approximation:
 def heat_btcs(J, N, r, T_initial):
 
     # Initializing the linear system matrix:
-    A = np.diag(np.full(J-1, 1 + 2*r)) + np.diag(np.full(J-2, -r), k=1) + np.diag(np.full(J-2, -r), k=-1)
-
+    main = np.full(J-1, 1 + 2*r)
+    upper = np.full(J-2, -r) 
+    lower = np.full(J-2, -r)
     # Initializing the space-time matrix:
     T = np.zeros((J+1,N+1))
 
@@ -64,7 +88,7 @@ def heat_btcs(J, N, r, T_initial):
 
     # BTCS loop:
     for n in range(1,N+1):
-        T[1:J,n] = thomas(A,T[1:J,n-1])
+        T[1:J,n] = thomas_separate(upper, main, lower, T[1:J,n-1])
 
     return T
 
