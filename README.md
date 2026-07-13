@@ -1,4 +1,4 @@
-# computational-heat
+# heat-equation-numerical-methods
 
 This project explores mathematical modelling and numerical simulation through the study of the heat equation, starting from the idealized 1D rod with Dirichlet boundary conditions and working through the constraints of physical parameters. The analytical solution is derived via separation of variables and Fourier series expansion, while numerical approximations are computed using the Forward-Time Central-Space (FTCS) finite differences method.
 
@@ -9,7 +9,8 @@ This project explores mathematical modelling and numerical simulation through th
 - Finite difference discretization grid implementation
 - Forward-Time Central-Space (FTCS) derivation and implementation
 - Von Neumann Stability analysis and mathematical proof of the $r \leq 1/2$ stability criteria 
-- Backward-Time Central-Space (BTCS) derivation and implementation
+- Backward-Time Central-Space (BTCS) derivation, stability analysis and implementation
+- Crank-Nicolson derivation, stability analysis and implementation
 
 ## Table of Contents
 - [1. 1D Heat equation](#1-1d-heat-equation)
@@ -26,7 +27,12 @@ This project explores mathematical modelling and numerical simulation through th
   - [3.2 Stability analysis](#32-stability-analysis)
   - [3.3 Thomas' Algorithm](#33-thomas-algorithm)
   - [3.4 Implementation](#34-implementation)
-- [4. Future work](#4-future-work)
+  - [3.5 Results](#35-results)
+- [4. Crank-Nicolson](#4-crank-nicolson)
+  - [4.1 Derivation](#41-derivation)   
+  - [4.2 Stability analysis](#42-stability-analysis)
+  - [4.3 Implementation](#43-implementation)
+- [5. Future work](#5-future-work)
 
 ## 1. 1D Heat equation 
 
@@ -756,13 +762,13 @@ A major drawback of the FTCS method is that it is only conditionally stable, as 
 This is why we will introduce the BTCS approximation next. This approximation is built in the same way as FTCS, but instead of evaluating the equation at time step n, we evaluate it at the time step n+1, with backward finite differences in time. i.e.,
 
 $$
-\frac{\partial T}{\partial t} |_{n+1} \approx \frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t}
+\frac{\partial T}{\partial t} \Bigg|^{n+1} \approx \frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t}
 $$
 
 Likewise, the space derivative is also evaluated at the time step n+1:
 
 $$
-\frac{\partial^2 T}{\partial x^2 } |_{n+1} \approx \frac{T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1}}{(\Delta x )^2}
+\frac{\partial^2 T}{\partial x^2 } \Bigg|^{n+1} \approx \frac{T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1}}{(\Delta x )^2}
 $$
 
 Plugging this into the heat equation again yields:
@@ -800,7 +806,7 @@ T_{1}^{n} \\
 T_{2}^{n} \\
 \vdots \\
 \vdots \\
-T_{I-1}^{n} 
+T_{J-1}^{n} 
 \end{pmatrix}
 $$
 
@@ -812,14 +818,14 @@ $$
 -r T_{3}^{n+1} + (1+2r) T_{2}^{n+1} - r T_{1}^{n+1} = T_{2}^{n} \\
 \vdots \\
 \vdots \\
--r T_{I}^{n+1} + (1+2r) T_{I-1}^{n+1} - r T_{I-2}^{n+1} = T_{I-1}^{n}
+-r T_{J}^{n+1} + (1+2r) T_{J-1}^{n+1} - r T_{J-2}^{n+1} = T_{J-1}^{n}
 \end{cases}
 $$
 
 Which exactly translates to:
 
 $$
-AT^{n+1} = T^n + b
+AT^{n+1} = T^n + b^{n+1}
 $$
 
 With:
@@ -835,14 +841,14 @@ A =
 0 & 0 & 0 & 0 & -r & (1+2r) \\
 \end{pmatrix}
 \text{ and }
-b =
+b^{n+1} =
 \begin{pmatrix}
 r T_{0}^{n+1} \\
 0 \\
 0  \\
 .. \\
 0 \\
-r T_{I}^{n+1}  \\
+r T_{J}^{n+1}  \\
 \end{pmatrix}
 $$
 
@@ -966,7 +972,7 @@ $$
 p_0 = \frac{a_0}{b_0}
 $$
 
-And then substract p times the first row to the second one.
+And then subtract p times the first row to the second one.
 
 But since our matrix is tridiagonal, we can notice a few things:
 
@@ -983,6 +989,8 @@ Secondly, each element of the lower diagonal will be used exactly once to comput
 $$
 p_i = \frac{a_i}{b_i}
 $$
+
+Where $b_i$ denotes the current value of the diagonal after previous elimination steps.
 
 After which that entry would be set to zero, since it will never be used again, there is no need to explicitly modify it.
 
@@ -1006,7 +1014,7 @@ b_0 & c_0 & 0 & 0 & \cdots & 0 \\
 \end{pmatrix}
 $$
 
-And its corresponding linear system, for simplicity, I have represented the unknown vector by _x_ and the right-hand side of the equation by _d_:  
+And its corresponding linear system, for simplicity, I have represented the unknown vector by _x_ and the right-hand side of the equation by _d_:
 
 $$
 \begin{pmatrix}
@@ -1048,17 +1056,18 @@ $$
 The following python implementation mirrors this process closely by only storing the necessary information and not performing redundant calculations:
 
 ```Python
-def thomas(A, d):
+# An implementation of Thomas' algorithm:
+def thomas(upper,main,lower,d):
     # Setting up the parameters:
-	upper = np.diagonal(A, offset = 1).copy()
-	main = np.diagonal(A).copy()
-	lower = np.diagonal(A, offset = -1).copy()
+	upper = upper.copy()
+	main = main.copy()
+	lower = lower.copy()
 	d = d.copy()
 	n = len(main)
 	x = np.zeros(n)
 	
     # Forward elimination:
-	for i in range(1, n):
+	for i in range(1,n):
 		pivot = lower[i-1] / main[i-1]
 		main[i] = main[i] - pivot * upper[i-1]
 		d[i] = d[i] - pivot * d[i-1]
@@ -1073,12 +1082,322 @@ def thomas(A, d):
 
 ### 3.4 Implementation
 
+Since the state of our system at any given time is represented by a one-dimensional state vector, it is only natural that the complete numerical solution can be stored as a space-time matrix of size $(J+1,N+1)$. The solution is computed one time step at a time by solving the linear system using Thomas' algorithm:
+
 ```Python
-# An implementation of the BTCS approximation:
 def heat_btcs(J, N, r, T_initial):
 
     # Initializing the linear system matrix:
-    A = np.diag(np.full(J-1, 1 + 2*r)) + np.diag(np.full(J-2, -r), k=1) + np.diag(np.full(J-2, -r), k=-1)
+    main = np.full(J-1, 1 + 2*r)
+    upper = np.full(J-2, -r) 
+    lower = np.full(J-2, -r)
+    # Initializing the space-time matrix:
+    T = np.zeros((J+1,N+1))
+
+    # Applying the initial conditions:
+    T[:,0] = T_initial
+
+    # Forcing the boundary conditions:
+    T[0,:] = 0
+    T[J,:] = 0
+
+    # BTCS loop:
+    for n in range(1,N+1):
+        T[1:J,n] = thomas(upper, main, lower, T[1:J,n-1])
+
+    return T
+```
+
+### 3.5 Results
+
+Below are the same experiments we ran for the FTCS scheme with the exact same parameters:
+
+The sinusoidal initial temperature distribution 
+
+$$
+f(x) = 1000 \sin(\frac{\pi x}{L}) 
+$$
+
+has the exact same accuracy as the FTCS simulation, with a maximum relative error of 0.00035%:
+
+![BTCS comparison](images/btcs_comp.png)
+
+The Gaussian simulation too behaves much the same way:
+
+![BTCS Gaussian](images/gaussian_btcs.png)
+
+And here is a comparison between the Gaussian simulation for BTCS and FTCS, with the number of spatial point being equal to 400 and $r = 0.4$:
+
+![BTCS vs FTCS](images/btcs_ftcs.png)
+
+We can see that the two approximations match very closely, with a maximum difference of 0.008 C.
+
+## 4. Crank-Nicolson
+
+### 4.1 Derivation
+
+As explained previously, both FTCS and BTCS are first order accurate in time, as their accuracy is $O(\Delta x^2 + \Delta t)$, the next method we will introduce has the advantage of being second order accurate in both space and time, while being unconditionally stable.
+
+At its core, Crank Nicolson is simply evaluating the equation at time step $n+ \frac{1}{2}$:
+
+$$
+\frac{\partial T}{\partial t} \Bigg|^{n+ \frac{1}{2}} = \alpha \frac{\partial^2 T}{\partial x^2} \Bigg| ^{n+ \frac{1}{2} }
+$$
+
+We obtain the spatial derivative by taking the average of the BTCS and FTCS spatial terms:
+
+$$
+\frac{\partial^2 T}{\partial x^2 } \Bigg|^{n+ \frac{1}{2} } \approx \frac{1}{2} ( \frac{T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1}}{(\Delta x )^2} + \frac{T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n}}{(\Delta x )^2})
+$$
+
+Likewise, we can obtain an approximation of the time derivative at time step $n + \frac{1}{2}$ using Taylor's expansion. Consider a sufficiently smooth function _f_, its third order Taylor expansion is:
+
+$$
+\begin{cases}
+f(t_0 +h) = f(t_0) + hf'(t_0) + \frac{h^2}{2} f''(t_0) + O(h^3) \\
+f(t_0 -h) = f(t_0) - hf'(t_0) + \frac{h^2}{2} f''(t_0) + O(h^3)
+\end{cases}
+$$
+
+Subtracting these two expressions yields: 
+
+$$
+f(t_0 +h) - f(t_0 -h) =  2h f'(t_0) + O(h^3)
+$$
+
+Dividing both sides by 2h:
+
+$$
+f'(t_0) = \frac{f(t_0 +h) - f(t_0 -h)}{2h} + O(h^2)
+$$
+
+Setting $h = \frac{1}{2} \Delta t$ yields:
+
+$$
+f'(t_0) = \frac{f(t_0 + \frac{1}{2} \Delta t) - f(t_0 - \frac{1}{2} \Delta t)}{\Delta t} + O(\Delta t^2)
+$$
+
+Choosing $t_0 = t + \frac{1}{2} \Delta t$ gives:
+
+$$
+f'(t + \frac{1}{2} \Delta t) = \frac{f(t + \Delta t) - f(t)}{\Delta t} + O(\Delta t^2)
+$$
+
+Discarding the $O(\Delta t^2)$ term yields:
+
+$$
+f'(t + \frac{1}{2} \Delta t) \approx \frac{f(t + \Delta t) - f(t)}{\Delta t}
+$$
+
+Applying this to the left hand side of the heat equation gives:
+
+$$
+\frac{\partial T}{\partial t} \Bigg|^{n+ \frac{1}{2} } \approx \frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t}
+$$
+
+While this is the same expression as the forward difference used in the FTCS scheme, this is actually a centered approximation of the time derivative at time step $n+ \frac{1}{2}$. As shown by the Taylor expansion above, this is a second order approximation of the time derivative.
+
+Which is why Crank-Nicolson is second order accurate in space and time.
+
+Applying these two approximations to the heat equation gives:
+
+$$
+\frac{T_{j}^{n+1} - T_{j}^{n}}{\Delta t} = \frac{1}{2} \alpha ( \frac{T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1}}{(\Delta x )^2} + \frac{T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n}}{(\Delta x )^2})
+$$
+
+$\Rightarrow$
+
+$$
+T_{j}^{n+1} - T_{j}^{n} = \frac{1}{2} \frac{\alpha \Delta t}{ \Delta x^2} ( T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1} + T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n})
+$$
+
+Setting $r = \frac{\alpha \Delta t}{ \Delta x^2}$:
+
+$$
+T_{j}^{n+1} - T_{j}^{n} = \frac{1}{2} r ( T_{j+1}^{n+1} - 2 T_{j}^{n+1} + T_{j-1}^{n+1} + T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n})
+$$
+
+Rearranging gives:
+
+$$
+T_{j}^{n+1} - \frac{1}{2} r  T_{j+1}^{n+1} + r T_{j}^{n+1} - \frac{1}{2} r  T_{j-1}^{n+1} = T_{j}^{n} + \frac{1}{2} r (T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n})
+$$
+
+i.e.,
+
+$$
+ -\frac{1}{2} r  T_{j+1}^{n+1} + (1+r) T_{j}^{n+1} - \frac{1}{2} r  T_{j-1}^{n+1} = \frac{1}{2} r  T_{j+1}^{n} + (1-r) T_{j}^{n} + \frac{1}{2} r  T_{j-1}^{n}
+$$
+
+Which is exactly the Crank-Nicolson scheme.
+
+Once again using the same state vector as before:
+
+$$
+T^n = 
+\begin{pmatrix}
+T_{1}^{n} \\
+T_{2}^{n} \\
+\vdots \\
+\vdots \\
+T_{J-1}^{n} 
+\end{pmatrix}
+$$
+
+This gives us a system of equations:
+
+$$
+\begin{cases}
+ -\frac{1}{2} r T_{2}^{n+1} + (1+r) T_{1}^{n+1} - \frac{1}{2} r T_{0}^{n+1} = \frac{1}{2} r  T_{2}^{n} + (1-r) T_{1}^{n} + \frac{1}{2} r  T_{0}^{n} \\
+ -\frac{1}{2} r T_{3}^{n+1} + (1+r) T_{2}^{n+1} - \frac{1}{2} r T_{1}^{n+1} = \frac{1}{2} r  T_{3}^{n} + (1-r) T_{2}^{n} + \frac{1}{2} r  T_{1}^{n} \\
+\vdots \\
+\vdots \\
+ -\frac{1}{2} r T_{J}^{n+1} + (1+r) T_{J-1}^{n+1} - \frac{1}{2} r T_{J-2}^{n+1} = \frac{1}{2} r  T_{J}^{n} + (1-r) T_{J-1}^{n} + \frac{1}{2} r  T_{J-2}^{n}
+\end{cases}
+$$
+
+Which corresponds to the following linear system:
+
+$$
+A T^{n+1} = BT^n + b
+$$
+
+Where:
+
+$$
+A =
+\begin{pmatrix}
+(1+r) & - \frac{r}{2} & 0 & 0 & \cdots & 0 \\
+ -\frac{r}{2} & (1+r) & - \frac{r}{2} & 0 & 0 & 0 \\
+0 & - \frac{r}{2} & (1+r) & - \frac{r}{2}  & 0 & \vdots \\
+0 & 0 & - \frac{r}{2} & \ddots & \ddots & 0 \\
+\vdots & \vdots & 0 & \ddots & \ddots & - \frac{r}{2} \\
+0 & 0 & 0 & 0 & - \frac{r}{2} & (1+r) \\
+\end{pmatrix}
+\text{ ;  }
+b^{n+1} =
+\begin{pmatrix}
+\frac{r}{2}( T_{0}^{n+1} + T_{0}^{n}) \\
+0 \\
+0  \\
+.. \\
+0 \\
+\frac{r}{2}( T_{J}^{n+1} + T_{J}^{n})  \\
+\end{pmatrix}
+$$
+
+$$
+B =
+\begin{pmatrix}
+(1-r) &  \frac{r}{2} & 0 & 0 & \cdots & 0 \\
+\frac{r}{2} & (1-r) & \frac{r}{2} & 0 & 0 & 0 \\
+0 & \frac{r}{2} & (1-r) & \frac{r}{2}  & 0 & \vdots \\
+0 & 0 & \frac{r}{2} & \ddots & \ddots & 0 \\
+\vdots & \vdots & 0 & \ddots & \ddots & \frac{r}{2} \\
+0 & 0 & 0 & 0 & \frac{r}{2} & (1-r) \\
+\end{pmatrix}
+$$
+
+### 4.2 Stability analysis
+
+We will once again be modeling the error as a Fourier mode:
+
+$$
+\epsilon_j^n = \xi^{n} e^{ik j\Delta x}
+$$
+
+Where $\xi$ is the amplification factor and $k$ is the wave number.
+
+Plugging this into the Crank-Nicolson scheme:
+
+$$
+ -\frac{1}{2} r \epsilon_{j+1}^{n+1} + (1+r) \epsilon_{j}^{n+1} - \frac{1}{2} r  \epsilon_{j-1}^{n+1} = \frac{1}{2} r  \epsilon_{j+1}^{n} + (1-r) \epsilon_{j}^{n} + \frac{1}{2} r  \epsilon_{j-1}^{n}
+$$
+
+i.e.,
+
+$$
+ -\frac{1}{2} r  \xi^{n+1} e^{ik (j+1)\Delta x} + (1+r) \xi^{n+1} e^{ik j\Delta x} - \frac{1}{2} r  \xi^{n+1} e^{ik (j-1)\Delta x} = \frac{1}{2} r  \xi^{n} e^{ik (j+1)\Delta x} + (1-r) \xi^{n} e^{ik j\Delta x} + \frac{1}{2} r  \xi^{n} e^{ik (j-1)\Delta x}
+$$
+
+Dividing both sides by $\xi^{n} e^{ik j\Delta x}$:
+
+$$
+ -\frac{1}{2} r  \xi e^{ik\Delta x} + (1+r) \xi - \frac{1}{2} r  \xi e^{-ik \Delta x} = \frac{1}{2} r   e^{ik \Delta x} + (1-r) + \frac{1}{2} r e^{-ik \Delta x}
+$$
+
+i.e.,
+
+$$
+\xi (- \frac{1}{2} r (e^{ik\Delta x} + e^{-ik\Delta x} )+ 1 + r) = \frac{1}{2} r (e^{ik\Delta x} + e^{-ik\Delta x}) + 1 - r
+$$
+
+i.e.,
+
+$$
+\xi (-r \cos(k\Delta x) + 1 + r) = r \cos(k\Delta x) + 1 - r
+$$
+
+Thus:
+
+$$
+\xi = \frac{1 - r( 1 - \cos(k\Delta x))}{1 + r(1 - \cos(k\Delta x))}
+$$
+
+Let $a = r( 1 - \cos(k\Delta x))$:
+
+$$
+\xi = \frac{1-a}{1+a}
+$$
+
+We know that $r > 0$ and that $-1 \leq \cos(x) \leq 1$:
+
+$$
+ -1 \leq -\cos(x) \leq 1
+$$
+
+$\Rightarrow$
+
+$$
+0 \leq 1 -\cos(x) \leq 2
+$$
+
+Thus:
+
+$$
+a \geq 0
+$$
+
+We know that:
+
+$$
+a + 1 \geq 1 \geq 1 - a \geq -1 -a
+$$
+
+i.e.,
+
+$$
+1 \geq \xi \geq -1
+$$
+
+i.e.,
+
+$$
+|\xi| \leq 1
+$$
+
+The Crank-Nicolson approximation is thus unconditionally stable.
+
+### 4.3 Implementation
+
+```Python
+# An implementation of the Crank-Nicolson scheme:
+def heat_cn(J, N, r, T_initial):
+
+    # Initializing the left hand side matrix:
+    main = np.full(J-1, 1 + r)
+    upper = np.full(J-2, -0.5 * r) 
+    lower = np.full(J-2, -0.5 * r)
 
     # Initializing the space-time matrix:
     T = np.zeros((J+1,N+1))
@@ -1092,14 +1411,13 @@ def heat_btcs(J, N, r, T_initial):
 
     # BTCS loop:
     for n in range(1,N+1):
-        T[1:J,n] = thomas(A,T[1:J,n-1])
+        rhs = (1 - r) * T[1:J, n-1] + (r/2) * (T[2:J+1, n-1] + T[0:J-1, n-1])
+        T[1:J,n] = thomas(upper, main, lower, rhs)
 
     return T
 ```
 
+## 5. Future Work
 
-## 4. Future Work
-
-- Implementing Crank-Nicolson
-- Solving the 2D heat equation
+- 2D heat equation
 
