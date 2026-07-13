@@ -24,30 +24,7 @@ def heat_ftcs(J, N, r, T_initial):
     return T
 
 # An implementation of Thomas' algorithm:
-def thomas(A,d):
-    # Setting up the parameters:
-	upper = np.diagonal(A, offset = 1).copy()
-	main = np.diagonal(A).copy()
-	lower = np.diagonal(A, offset = -1).copy()
-	d = d.copy()
-	n = len(main)
-	x = np.zeros(n)
-	
-    # Forward elimination:
-	for i in range(1,n):
-		pivot = lower[i-1] / main[i-1]
-		main[i] = main[i] - pivot * upper[i-1]
-		d[i] = d[i] - pivot * d[i-1]
-	
-    # Back substitution
-	x[n-1] = d[n-1] / main[n-1]
-	for i in range(n-2,-1,-1):
-		x[i] = (d[i] - upper[i] * x[i+1]) / main[i]
-		
-	return x
-
-# An implementation of Thomas' algorithm that only takes the relevant informations:
-def thomas_separate(upper,main,lower,d):
+def thomas(upper,main,lower,d):
     # Setting up the parameters:
 	upper = upper.copy()
 	main = main.copy()
@@ -88,7 +65,32 @@ def heat_btcs(J, N, r, T_initial):
 
     # BTCS loop:
     for n in range(1,N+1):
-        T[1:J,n] = thomas_separate(upper, main, lower, T[1:J,n-1])
+        T[1:J,n] = thomas(upper, main, lower, T[1:J,n-1])
+
+    return T
+
+# An implementation of the Crank-Nicolson scheme:
+def heat_cn(J, N, r, T_initial):
+
+    # Initializing the left hand side matrix:
+    main = np.full(J-1, 1 + r)
+    upper = np.full(J-2, -0.5 * r) 
+    lower = np.full(J-2, -0.5 * r)
+
+    # Initializing the space-time matrix:
+    T = np.zeros((J+1,N+1))
+
+    # Applying the initial conditions:
+    T[:,0] = T_initial
+
+    # Forcing the boundary conditions:
+    T[0,:] = 0
+    T[J,:] = 0
+
+    # BTCS loop:
+    for n in range(1,N+1):
+        rhs = (1 - r) * T[1:J, n-1] + (r/2) * (T[2:J+1, n-1] + T[0:J-1, n-1])
+        T[1:J,n] = thomas(upper, main, lower, rhs)
 
     return T
 
