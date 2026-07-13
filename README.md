@@ -1,6 +1,6 @@
 # heat-equation-numerical-methods
 
-This project explores mathematical modelling and numerical simulation through the study of the heat equation, starting from the idealized 1D rod with Dirichlet boundary conditions and working through the constraints of physical parameters. The analytical solution is derived via separation of variables and Fourier series expansion, while numerical approximations are computed using the Forward-Time Central-Space (FTCS) finite differences method.
+This project explores mathematical modelling and numerical simulation through the study of the heat equation, starting from the idealized 1D rod with Dirichlet boundary conditions and working through the constraints of physical parameters. The analytical solution is derived via separation of variables and Fourier series expansion, while numerical approximations are computed using the Forward-Time Central-Space (FTCS), Backward-Time Central-Space (BTCS) and Crank-Nicolson finite differences methods.
 
 ## Features
 - First-principles derivation of the 1D heat equation from Fourier's law and energy conservation
