@@ -12,6 +12,22 @@ This project explores mathematical modelling and numerical simulation through th
 - Backward-Time Central-Space (BTCS) derivation, stability analysis and implementation
 - Crank-Nicolson derivation, stability analysis and implementation
 
+## Repository Structure
+
+```text
+.
+├── images/                     # Figures used in the report/README
+├── models/
+│   ├── gaussian_btcs.py        # BTCS experiments (Gaussian IC)
+│   ├── gaussian_ftcs.py        # FTCS experiments (Gaussian IC)
+│   ├── sinusoidal_btcs.py      # BTCS experiments (sinusoidal IC)
+│   └── sinusoidal_ftcs.py      # FTCS experiments (sinusoidal IC)
+├── utils/
+│   └── utilities.py            # Numerical solvers and helper functions
+├── convergence.py              # Convergence study
+└── README.md                   # Project documentation
+```
+
 ## Table of Contents
 - [1. 1D Heat equation](#1-1d-heat-equation)
   - [1.1 Deriving the equation from first principles](#11-deriving-the-equation-from-first-principles)
@@ -32,6 +48,7 @@ This project explores mathematical modelling and numerical simulation through th
   - [4.1 Derivation](#41-derivation)   
   - [4.2 Stability analysis](#42-stability-analysis)
   - [4.3 Implementation](#43-implementation)
+  - [4.4 Results](#44-results)
 - [5. Future work](#5-future-work)
 
 ## 1. 1D Heat equation 
@@ -443,7 +460,7 @@ Similarly, we can obtain an approximation for the second derivative of f using i
 $$
 \begin{cases}
 f(x+h) = f(x) + hf'(x) + \frac{h^2}{2} f''(x) + \frac{h^3}{6} f'''(x) + O(h^4) \\
-f(x-h) = f(x) - hf'(x) + \frac{h^2}{2} f''(x) - \frac{h^3}{6} f'''(x) + O(h^4)
+f(x-h) = f(x) - hf'(x) + \frac{h^2}{2} f''(x) frac{h^3}{6} f'''(x) + O(h^4)
 \end{cases}
 $$
 
@@ -554,10 +571,10 @@ $$
 $\Rightarrow$
 
 $$
-\xi = 1 - 2r(1 - \cos(k \Delta x))
+\xi = 1 - 2r(1 cos(k \Delta x))
 $$
 
-Knowing that $1 - \cos(\theta) = 2 \sin^2 (\frac{\theta}{2})$:
+Knowing that $1 cos(\theta) = 2 \sin^2 (\frac{\theta}{2})$:
 
 $$
 \xi = 1 - 4r\sin^2(\frac{k \Delta x}{2})
@@ -748,10 +765,11 @@ This second figure represents a heat map of the numerical FTCS solution in the c
 
 ![Gaussian](images/gaussian.png)
 
-The following figure portrays the spatial Convergence of  the FTCS approximation in the case of the sinusoidal temperature distribution with a constant dt in a log-log scale, we can see that the convergence matches the second order expected rate.
+The following figure portrays the spatial Convergence of  the FTCS approximation in the case of the sinusoidal temperature distribution with a constant r in a log-log scale:
 
-![Spatial Convergence](images/spatial_convergence.png)
+![Spatial Convergence](images/ftcs_spatial_convergence.png)
 
+The observed spatial order is 2.067 which matches very closely with the theoretical order of 2.
 
 ## 3. Backward-Time Central-Space 
 
@@ -909,25 +927,25 @@ $$
 $\Rightarrow$
 
 $$
-\xi = \frac{1}{1+2r(1- \cos (k\Delta x))} \geq 0
+\xi = \frac{1}{1+2r(1cos (k\Delta x))} \geq 0
 $$
 
 Since $-1 \leq \cos (k\Delta x) \leq 1$ we have that:
 
 $$
-0 \leq 1 - \cos (k\Delta x) \leq 2
+0 \leq 1 cos (k\Delta x) \leq 2
 $$
 
 And since $r \in \mathbb{R^+}$:
 
 $$
-2r (1- \cos (k\Delta x)) \geq 0
+2r (1cos (k\Delta x)) \geq 0
 $$
 
 i.e.,
 
 $$
-1+ 2r (1- \cos (k\Delta x)) \geq 1
+1+ 2r (1cos (k\Delta x)) \geq 1
 $$
 
 Which finally yields:
@@ -1132,6 +1150,18 @@ And here is a comparison between the Gaussian simulation for BTCS and FTCS, with
 
 We can see that the two approximations match very closely, with a maximum difference of 0.008 C.
 
+The following figure portrays the spatial Convergence of  the BTCS approximation in the case of the sinusoidal temperature distribution with a constant r in a log-log scale:
+
+![Spatial Convergence](images/btcs_spatial_convergence.png)
+
+The observed spatial order is 1.982 which matches very closely with the theoretical order of 2.
+
+The following figure portrays the temporal Convergence of  the BTCS approximation in the case of the sinusoidal temperature distribution with a constant dx in a log-log scale:
+
+![Temporal Convergence](images/btcs_temporal_convergence.png)
+
+The observed spatial order is 0.890 which closely matches with the theoretical order of 1.
+
 ## 4. Crank-Nicolson
 
 ### 4.1 Derivation
@@ -1174,7 +1204,7 @@ $$
 Setting $h = \frac{1}{2} \Delta t$ yields:
 
 $$
-f'(t_0) = \frac{f(t_0 + \frac{1}{2} \Delta t) - f(t_0 - \frac{1}{2} \Delta t)}{\Delta t} + O(\Delta t^2)
+f'(t_0) = \frac{f(t_0 + \frac{1}{2} \Delta t) - f(t_0 frac{1}{2} \Delta t)}{\Delta t} + O(\Delta t^2)
 $$
 
 Choosing $t_0 = t + \frac{1}{2} \Delta t$ gives:
@@ -1220,7 +1250,7 @@ $$
 Rearranging gives:
 
 $$
-T_{j}^{n+1} - \frac{1}{2} r  T_{j+1}^{n+1} + r T_{j}^{n+1} - \frac{1}{2} r  T_{j-1}^{n+1} = T_{j}^{n} + \frac{1}{2} r (T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n})
+T_{j}^{n+1} frac{1}{2} r  T_{j+1}^{n+1} + r T_{j}^{n+1} frac{1}{2} r  T_{j-1}^{n+1} = T_{j}^{n} + \frac{1}{2} r (T_{j+1}^{n} - 2 T_{j}^{n} + T_{j-1}^{n})
 $$
 
 i.e.,
@@ -1259,7 +1289,7 @@ $$
 Which corresponds to the following linear system:
 
 $$
-A T^{n+1} = BT^n + b
+A T^{n+1} = BT^n + b^n
 $$
 
 Where:
@@ -1275,7 +1305,7 @@ A =
 0 & 0 & 0 & 0 & - \frac{r}{2} & (1+r) \\
 \end{pmatrix}
 \text{ ;  }
-b^{n+1} =
+b^{n} =
 \begin{pmatrix}
 \frac{r}{2}( T_{0}^{n+1} + T_{0}^{n}) \\
 0 \\
@@ -1296,6 +1326,12 @@ B =
 \vdots & \vdots & 0 & \ddots & \ddots & \frac{r}{2} \\
 0 & 0 & 0 & 0 & \frac{r}{2} & (1-r) \\
 \end{pmatrix}
+$$
+
+Since boundary temperature is always zero, the system simplifies to:
+
+$$
+A T^{n+1} = BT^n
 $$
 
 ### 4.2 Stability analysis
@@ -1353,7 +1389,7 @@ $$
 We know that $r > 0$ and that $-1 \leq \cos(x) \leq 1$:
 
 $$
- -1 \leq -\cos(x) \leq 1
+-1 \leq -\cos(x) \leq 1
 $$
 
 $\Rightarrow$
@@ -1390,6 +1426,8 @@ The Crank-Nicolson approximation is thus unconditionally stable.
 
 ### 4.3 Implementation
 
+The Crank-Nicolson implementation is much the same as the BTCS one, with the only difference being that the left hand side matrix is slightly different and that the right hand side needs to be computed with a matrix multiplication.
+
 ```Python
 # An implementation of the Crank-Nicolson scheme:
 def heat_cn(J, N, r, T_initial):
@@ -1409,13 +1447,21 @@ def heat_cn(J, N, r, T_initial):
     T[0,:] = 0
     T[J,:] = 0
 
-    # BTCS loop:
+    # Crank-Nicolson loop:
     for n in range(1,N+1):
         rhs = (1 - r) * T[1:J, n-1] + (r/2) * (T[2:J+1, n-1] + T[0:J-1, n-1])
         T[1:J,n] = thomas(upper, main, lower, rhs)
 
     return T
 ```
+
+### 4.4 Results
+
+The following figure portrays the spatial Convergence of  the Crank-Nicolson approximation in the case of the sinusoidal temperature distribution with a constant r in a log-log scale:
+
+![Spatial Convergence](images/cn_spatial_convergence.png)
+
+The observed spatial order is 1.951 which matches very closely with the theoretical order of 2.
 
 ## 5. Future Work
 
